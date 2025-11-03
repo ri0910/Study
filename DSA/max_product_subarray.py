@@ -12,7 +12,7 @@ class Solution:
         return res
         
 if __name__ == "__main__":
-    nums = list(map(int, input("Enter numbers to check max pproduct of subarray, separated by space: ").split()))
+    nums = list(map(int, input("Enter numbers to check max product of subarray, separated by space: ").split()))
     sol = Solution()
     res = sol.maxProduct(nums)
     print("Maximum product of subarray : ", res)

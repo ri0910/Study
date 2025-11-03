@@ -97,3 +97,96 @@ SECOND_PART AS (
 SELECT *,
 ROUND((TOTAL_FOLLOWERS-PREV_MONTH_FOLLOWERS)*100/PREV_MONTH_FOLLOWERS, 2) A FOLLOWERS_GAIN
 FROM SECOND_PART;
+
+
+-- Problem Description:
+-- We are given a table called UserVisits which contains logs of the dates that users visited a specific retailer. The table has two columns user_id and visit_date. We have to write an SQL query to find out the largest window of days between each visit and the one right after it (or today if we are considering the last visit) for each user_id. We return the result table ordered by user_id.
+
+-- Example:
+-- Given UserVisits table:
+
+-- user_id	visit_date
+-- 1	2020-11-28
+-- 1	2020-10-20
+-- 1	2020-12-3
+-- 2	2020-10-5
+-- 2	2020-12-9
+-- 3	2020-11-11
+
+
+WITH SORTED_VISITS AS (
+    SELECT USER_ID, VISIT_DATE,
+    LEAD(VISIT_DATE) OVER(PARTITION BY USER_ID ORDER BY VISIT_DATE) AS SORTED_VISITS_SEQ
+),
+DIFF_VISIT AS (
+    SELECT 
+        user_id,
+        (COALESCE(next_visit, CURRENT_DATE) - visit_date) AS diff_days
+    FROM SORTED_VISITS
+)
+SELECT USER_ID, MAX(DIFF) AS MAX_DIFF FROM DIFF_VISIT GROUP BY USER_ID ORDER BY USER_ID;
+
+
+
+
+-- +-------------+------+
+-- | Column Name | Type |
+-- +-------------+------+
+-- | player_id   | int  |
+-- | match_day   | date |
+-- | result      | enum |
+-- +-------------+------+
+-- (player_id, match_day) is the primary key for this table.
+-- Each row of this table contains the ID of a player, the day of the match they played, and the result of that match.
+-- The result column is an ENUM type of ('Win', 'Draw', 'Lose').
+
+-- The winning streak of a player is the number of consecutive wins uninterrupted by draws or losses.
+
+-- Write an SQL query to count the longest winning streak for each player.
+
+-- Return the result table in any order.
+
+-- The query result format is in the following example.
+
+ 
+
+-- Example 1:
+
+-- Input: 
+-- Matches table:
+-- +-----------+------------+--------+
+-- | player_id | match_day  | result |
+-- +-----------+------------+--------+
+-- | 1         | 2022-01-17 | Win    |
+-- | 1         | 2022-01-18 | Win    |
+-- | 1         | 2022-01-25 | Win    |
+-- | 1         | 2022-01-31 | Draw   |
+-- | 1         | 2022-02-08 | Win    |
+-- | 2         | 2022-02-06 | Lose   |
+-- | 2         | 2022-02-08 | Lose   |
+-- | 3         | 2022-03-30 | Win    |
+-- +-----------+------------+--------+
+-- Output: 
+-- +-----------+----------------+
+-- | player_id | longest_streak |
+-- +-----------+----------------+
+-- | 1         | 3              |
+-- | 2         | 0              |
+-- | 3         | 1              |
+-- +-----------+----------------+
+-- Explanation: 
+-- Player 1:
+-- From 2022-01-17 to 2022-01-25, player 1 won 3 consecutive matches.
+-- On 2022-01-31, player 1 had a draw.
+-- On 2022-02-08, player 1 won a match.
+-- The longest winning streak was 3 matches.
+
+-- Player 2:
+-- From 2022-02-06 to 2022-02-08, player 2 lost 2 consecutive matches.
+-- The longest winning streak was 0 matches.
+
+-- Player 3:
+-- On 2022-03-30, player 3 won a match.
+-- The longest winning streak was 1 match.
+
+
