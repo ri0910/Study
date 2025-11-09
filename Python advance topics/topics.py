@@ -15,3 +15,5 @@ print(c)
 
 d = reduce(lambda x, y: x*y, a)
 print(d)
+
+

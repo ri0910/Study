@@ -189,4 +189,79 @@ SELECT USER_ID, MAX(DIFF) AS MAX_DIFF FROM DIFF_VISIT GROUP BY USER_ID ORDER BY 
 -- On 2022-03-30, player 3 won a match.
 -- The longest winning streak was 1 match.
 
+-- 1 > top 3 products by sales, top 3 employees by salaries, within cat/dept
 
+select * from (
+    SELECT *,
+    ROW_NUMBER() OVER(PARTITION by dept order by salary) as rn,
+    DENSE_RANK() Over(PARTITION by dept order by salary) as DNS_RNK
+    from  employees
+) a
+where rn <= 2 ---> will not get duplicate salary, if we do DNS_RNK <= 2 then we will get duplicate salaries also
+
+
+with cte as (
+    select catagory, product_id, sum(sales) as sales
+    from orders group by catagory, product_id
+),
+cte1 as (select *,
+ROW_NUMBER() over(PARTITION by catagory order by sales desc) as rn
+from cte order by sales desc
+) select * from cte1 where rn<=5;
+
+--- yoy growth/products with current month sales more than previous month
+with cte as (
+    select category, year(order_date) as year_order,
+    sum(sales) as sales
+    from orders
+    group by catagory, year(order_date)
+),
+cte2 as (
+    select *,
+    lag(sales, 1, sales) over(PARTITION by catagory order by year_order) as previous_year_sales
+    from cte
+)
+select catagory, year_order,
+sales,
+previous_year_sales,
+(sales - previous_year_sales)*100/previous_year_sales as growth_percentage
+from cte2;
+-- prev year -> use lag or lead desc
+-- next year -> use lead or lag desc
+
+-- running/cumulative sales/ rolling n months sales
+
+with cte as (
+    select catagory, year(order_date) as year_order,
+    sum(sales) as sales
+    from orders
+    group by catagory, year(order_date)
+),
+select *,
+sum(sales) over(PARTITION by category order by year_order) as cumulative_sales
+from cte;
+
+-- rolling 3 months sales
+
+with cte as (
+    select year(order_date) as year_order,
+    month(order_date) as month_order,
+    sum(sales) as sales
+    from orders
+    group by year(order_date), month(order_date)
+),
+select *,
+sum(sales) over(Porder by year_order, month_order
+rows between 2 preceding and current row
+) as cumulative_sales
+from cte;
+
+
+-- pivoting -> convert rows into column--year wise each category
+
+select year(order_date),
+sum(case when category = 'Furniture' then sales else 0 end) as furniture_sales,
+sum(case when category = 'Office Supplies' then sales else 0 end) as office_supplies_sales,
+sum(case when category = 'Technology' then sales else 0 end) as technology_sales
+from orders
+group by year(order_date);
